@@ -1,0 +1,140 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Course Registration - School Management System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Course Registration</h2>
+            <p>Current Semester: {{ current_semester }}</p>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search Courses</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ request.GET.search }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="department" class="form-label">Department</label>
+                    <select class="form-select" id="department" name="department">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"i" %}selected{% endif %}>
+                            {{ dept.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="credits" class="form-label">Credits</label>
+                    <select class="form-select" id="credits" name="credits">
+                        <option value="">All Credits</option>
+                        <option value="1" {% if request.GET.credits == "1" %}selected{% endif %}>1 Credit</option>
+                        <option value="2" {% if request.GET.credits == "2" %}selected{% endif %}>2 Credits</option>
+                        <option value="3" {% if request.GET.credits == "3" %}selected{% endif %}>3 Credits</option>
+                        <option value="4" {% if request.GET.credits == "4" %}selected{% endif %}>4 Credits</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Available Courses -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Available Courses</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Course Code</th>
+                            <th>Course Name</th>
+                            <th>Credits</th>
+                            <th>Teacher</th>
+                            <th>Available Slots</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for offering in course_offerings %}
+                        <tr>
+                            <td>{{ offering.course.code }}</td>
+                            <td>{{ offering.course.name }}</td>
+                            <td>{{ offering.course.credits }}</td>
+                            <td>{{ offering.teacher.user.get_full_name }}</td>
+                            <td>
+                                {{ offering.available_slots }} / {{ offering.max_students }}
+                            </td>
+                            <td>
+                                {% if offering.is_full %}
+                                    <button class="btn btn-sm btn-secondary" disabled>Full</button>
+                                {% elif offering.is_registered %}
+                                    <form method="post" action="{% url 'students:drop_course' offering.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger">Drop</button>
+                                    </form>
+                                {% else %}
+                                    <form method="post" action="{% url 'students:register_course' offering.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-success">Register</button>
+                                    </form>
+                                {% endif %}
+                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#courseModal{{ offering.id }}">
+                                    Details
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Course Details Modal -->
+                        <div class="modal fade" id="courseModal{{ offering.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">{{ offering.course.code }} - {{ offering.course.name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <h6>Course Description</h6>
+                                        <p>{{ offering.course.description }}</p>
+                                        
+                                        <h6>Prerequisites</h6>
+                                        <ul>
+                                            {% for prereq in offering.course.prerequisites.all %}
+                                            <li>{{ prereq.code }} - {{ prereq.name }}</li>
+                                            {% empty %}
+                                            <li>No prerequisites</li>
+                                            {% endfor %}
+                                        </ul>
+
+                                        <h6>Schedule</h6>
+                                        <p>Schedule information will be displayed here</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No courses available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

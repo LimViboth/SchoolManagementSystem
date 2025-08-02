@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}School Management System{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+    {% if dashboard_type == 'student' %}
+    <!-- Student Dashboard -->
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Welcome, {{ student.user.get_full_name }}</h2>
+                <p class="lead">Student ID: {{ student.student_id }}</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Your Courses</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Instructor</th>
+                                        <th>Schedule</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for course in enrolled_courses %}
+                                    <tr>
+                                        <td>{{ course.course_code }}</td>
+                                        <td>{{ course.name }}</td>
+                                        <td>{{ course.instructor.name }}</td>
+                                        <td>{{ course.schedule }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No courses enrolled yet.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="{% url 'course_registration' %}" class="list-group-item list-group-item-action">
+                                <i class="bi bi-plus-circle me-2"></i>Register for Courses
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <i class="bi bi-card-checklist me-2"></i>View Grades
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <i class="bi bi-calendar3 me-2"></i>View Schedule
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Academic Info</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Department:</strong> {{ student.department.name }}</p>
+                        <p><strong>Grade Level:</strong> {{ student.grade }}</p>
+                        <p><strong>Status:</strong> Active</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% elif dashboard_type == 'teacher' %}
+    <!-- Teacher Dashboard -->
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Welcome, {{ teacher.user.get_full_name }}</h2>
+                <p class="lead">Faculty Member</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Your Courses</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Students</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for course in teaching_courses %}
+                                    <tr>
+                                        <td>{{ course.course_code }}</td>
+                                        <td>{{ course.name }}</td>
+                                        <td>{{ course.enrolled_students.count }}</td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-primary">Manage</a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No courses assigned yet.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <i class="bi bi-pencil-square me-2"></i>Grade Management
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <i class="bi bi-file-earmark-text me-2"></i>Course Materials
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <i class="bi bi-calendar3 me-2"></i>Schedule
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Department Info</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Department:</strong> {{ teacher.department.name }}</p>
+                        <p><strong>Office:</strong> {{ teacher.office }}</p>
+                        <p><strong>Status:</strong> Active</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% elif dashboard_type == 'admin' %}
+    <!-- Admin Dashboard -->
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Administrative Dashboard</h2>
+                <p class="lead">System Overview</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Students</h5>
+                        <p class="card-text display-4">{{ total_students }}</p>
+                        <a href="{% url 'admin:students_student_changelist' %}" class="btn btn-light">View All</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Teachers</h5>
+                        <p class="card-text display-4">{{ total_teachers }}</p>
+                        <a href="{% url 'admin:teachers_teacher_changelist' %}" class="btn btn-light">View All</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Active Courses</h5>
+                        <p class="card-text display-4">{{ active_courses }}</p>
+                        <a href="{% url 'admin:courses_course_changelist' %}" class="btn btn-light">View All</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Departments</h5>
+                        <p class="card-text display-4">{{ total_departments }}</p>
+                        <a href="{% url 'admin:core_department_changelist' %}" class="btn btn-light">View All</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="{% url 'admin:students_student_add' %}" class="list-group-item list-group-item-action">
+                                <i class="bi bi-person-plus me-2"></i>Add New Student
+                            </a>
+                            <a href="{% url 'admin:teachers_teacher_add' %}" class="list-group-item list-group-item-action">
+                                <i class="bi bi-person-video3 me-2"></i>Add New Teacher
+                            </a>
+                            <a href="{% url 'admin:courses_course_add' %}" class="list-group-item list-group-item-action">
+                                <i class="bi bi-journal-plus me-2"></i>Add New Course
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">System Overview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="{% url 'admin:index' %}" class="list-group-item list-group-item-action">
+                                <i class="bi bi-gear me-2"></i>Admin Panel
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <i class="bi bi-graph-up me-2"></i>View Reports
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <i class="bi bi-bell me-2"></i>System Notifications
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% endif %}
+{% else %}
+    <!-- Landing Page for Non-authenticated Users -->
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <h1 class="display-4 mb-4">Welcome to School Management System</h1>
+                <p class="lead mb-4">A comprehensive platform for students, teachers, and administrators.</p>
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Please log in to continue</h5>
+                        <p class="card-text">Use your credentials to access your personalized dashboard.</p>
+                        <a href="{% url 'login' %}" class="btn btn-primary btn-lg">Login</a>
+                    </div>
+                </div>
+                
+                <div class="row mt-5">
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <i class="bi bi-mortarboard fs-1 mb-3 text-primary"></i>
+                                <h5 class="card-title">Students</h5>
+                                <p class="card-text">Access your courses, view grades, and manage your academic journey.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <i class="bi bi-person-video3 fs-1 mb-3 text-success"></i>
+                                <h5 class="card-title">Teachers</h5>
+                                <p class="card-text">Manage your classes, update grades, and interact with students.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <i class="bi bi-gear fs-1 mb-3 text-info"></i>
+                                <h5 class="card-title">Administrators</h5>
+                                <p class="card-text">Oversee operations, manage users, and maintain the system.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

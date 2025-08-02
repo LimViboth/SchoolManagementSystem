@@ -1,0 +1,17 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Logged Out - School Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h4 class="mb-4">You have been logged out</h4>
+                <p class="mb-4">Thanks for spending some quality time with our school management system today.</p>
+                <a href="{% url 'login' %}" class="btn btn-primary">Log in again</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

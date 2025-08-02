@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.user.get_full_name }} - School Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'student_list' %}">Students</a></li>
+                <li class="breadcrumb-item active">{{ student.user.get_full_name }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column - Student Info -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Personal Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <img src="{{ student.profile_photo.url|default:'https://via.placeholder.com/150' }}" 
+                         alt="{{ student.user.get_full_name }}" 
+                         class="rounded-circle img-thumbnail" 
+                         style="width: 150px; height: 150px;">
+                </div>
+                <div class="mb-3">
+                    <strong>Student ID:</strong>
+                    <p>{{ student.student_id }}</p>
+                </div>
+                <div class="mb-3">
+                    <strong>Name:</strong>
+                    <p>{{ student.user.get_full_name }}</p>
+                </div>
+                <div class="mb-3">
+                    <strong>Email:</strong>
+                    <p>{{ student.user.email }}</p>
+                </div>
+                <div class="mb-3">
+                    <strong>Phone:</strong>
+                    <p>{{ student.phone|default:"Not provided" }}</p>
+                </div>
+                <div class="mb-3">
+                    <strong>Address:</strong>
+                    <p>{{ student.address|default:"Not provided" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Academic Summary</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Department
+                        <span class="badge bg-primary">{{ student.department.name }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Grade Level
+                        <span class="badge bg-info">{{ student.grade }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        GPA
+                        <span class="badge bg-success">{{ student.gpa|floatformat:2 }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Status
+                        <span class="badge {% if student.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ student.is_active|yesno:"Active,Inactive" }}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Grades & Attendance -->
+    <div class="col-md-8">
+        <!-- Grades Tab Panel -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#current-grades">
+                            Current Grades
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#grade-history">
+                            Grade History
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#attendance">
+                            Attendance
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- Current Grades Tab -->
+                    <div class="tab-pane fade show active" id="current-grades">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Course</th>
+                                        <th>Assignments (30%)</th>
+                                        <th>Midterm (30%)</th>
+                                        <th>Final (40%)</th>
+                                        <th>Total</th>
+                                        <th>Grade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for grade in current_grades %}
+                                    <tr>
+                                        <td>{{ grade.course.name }}</td>
+                                        <td>
+                                            {{ grade.assignment_score|default:'-' }}/30
+                                            <div class="progress" style="height: 4px;">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ grade.assignment_percentage }}%"></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {{ grade.midterm_score|default:'-' }}/30
+                                            <div class="progress" style="height: 4px;">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ grade.midterm_percentage }}%"></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {{ grade.final_score|default:'-' }}/40
+                                            <div class="progress" style="height: 4px;">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ grade.final_percentage }}%"></div>
+                                            </div>
+                                        </td>
+                                        <td>{{ grade.total_score|floatformat:1 }}/100</td>
+                                        <td>
+                                            <span class="badge {% if grade.letter_grade == 'A' %}bg-success
+                                                       {% elif grade.letter_grade == 'F' %}bg-danger
+                                                       {% else %}bg-primary{% endif %}">
+                                                {{ grade.letter_grade }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">No grades available for current semester.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Grade History Tab -->
+                    <div class="tab-pane fade" id="grade-history">
+                        <div class="mb-3">
+                            <select class="form-select" id="semesterSelect">
+                                {% for semester in semesters %}
+                                <option value="{{ semester.id }}">{{ semester.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Course</th>
+                                        <th>Semester</th>
+                                        <th>Total Score</th>
+                                        <th>Grade</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for grade in grade_history %}
+                                    <tr>
+                                        <td>{{ grade.course.name }}</td>
+                                        <td>{{ grade.semester.name }}</td>
+                                        <td>{{ grade.total_score }}/100</td>
+                                        <td>
+                                            <span class="badge {% if grade.letter_grade == 'A' %}bg-success
+                                                       {% elif grade.letter_grade == 'F' %}bg-danger
+                                                       {% else %}bg-primary{% endif %}">
+                                                {{ grade.letter_grade }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if grade.status == 'passed' %}bg-success
+                                                       {% elif grade.status == 'failed' %}bg-danger
+                                                       {% else %}bg-warning{% endif %}">
+                                                {{ grade.status|title }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">No grade history available.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4">
+                            <canvas id="gradeHistoryChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Tab -->
+                    <div class="tab-pane fade" id="attendance">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <canvas id="attendanceChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Attendance Summary</h5>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Course</th>
+                                                        <th>Rate</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for record in attendance_summary %}
+                                                    <tr>
+                                                        <td>{{ record.course.name }}</td>
+                                                        <td>
+                                                            <div class="progress" style="height: 20px;">
+                                                                <div class="progress-bar {% if record.rate >= 90 %}bg-success
+                                                                            {% elif record.rate >= 75 %}bg-warning
+                                                                            {% else %}bg-danger{% endif %}"
+                                                                     role="progressbar"
+                                                                     style="width: {{ record.rate }}%"
+                                                                     aria-valuenow="{{ record.rate }}"
+                                                                     aria-valuemin="0"
+                                                                     aria-valuemax="100">
+                                                                    {{ record.rate }}%
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge {% if record.rate >= 90 %}bg-success
+                                                                       {% elif record.rate >= 75 %}bg-warning
+                                                                       {% else %}bg-danger{% endif %}">
+                                                                {% if record.rate >= 90 %}Excellent
+                                                                {% elif record.rate >= 75 %}Good
+                                                                {% else %}At Risk{% endif %}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Attendance Log</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Course</th>
+                                                <th>Status</th>
+                                                <th>Notes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for log in attendance_logs %}
+                                            <tr>
+                                                <td>{{ log.date }}</td>
+                                                <td>{{ log.course.name }}</td>
+                                                <td>
+                                                    <span class="badge {% if log.status == 'present' %}bg-success
+                                                               {% elif log.status == 'absent' %}bg-danger
+                                                               {% else %}bg-warning{% endif %}">
+                                                        {{ log.status|title }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ log.notes|default:'-' }}</td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="4" class="text-center">No attendance records found.</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                                    {% for enrollment in student.enrollment_set.all %}
+                                    <tr>
+                                        <td>{{ enrollment.course_offering.course.code }}</td>
+                                        <td>{{ enrollment.course_offering.course.name }}</td>
+                                        <td>{{ enrollment.course_offering.teacher.user.get_full_name }}</td>
+                                        <td>{{ enrollment.grade|default:'-' }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No courses enrolled.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Attendance Chart
+    const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(attendanceCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Present', 'Absent', 'Late'],
+            datasets: [{
+                data: {{ attendance_stats|safe }}, // [present_count, absent_count, late_count]
+                backgroundColor: ['#28a745', '#dc3545', '#ffc107'],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Overall Attendance Distribution'
+                }
+            }
+        }
+    });
+
+    // Grade History Chart
+    const gradeCtx = document.getElementById('gradeHistoryChart').getContext('2d');
+    new Chart(gradeCtx, {
+        type: 'line',
+        data: {
+            labels: {{ grade_history_labels|safe }},
+            datasets: [{
+                label: 'GPA',
+                data: {{ grade_history_data|safe }},
+                borderColor: '#007bff',
+                tension: 0.1,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'GPA Trend'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 4.0
+                }
+            }
+        }
+    });
+
+    // Handle semester selection change
+    document.getElementById('semesterSelect').addEventListener('change', function() {
+        // You can add AJAX call here to update the grade history table
+        // based on the selected semester
+        const semesterId = this.value;
+        fetch(`/api/grades/history/${student_id}/${semesterId}/`)
+            .then(response => response.json())
+            .then(data => {
+                // Update the grade history table with the new data
+                // This part will need to be implemented based on your API response
+            });
+    });
+</script>
+{% endblock %}

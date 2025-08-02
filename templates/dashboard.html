@@ -1,0 +1,213 @@
+{% extends 'base/base.html' %}
+
+{% block title %}
+    {% if dashboard_type == 'admin' %}
+        Admin Dashboard
+    {% elif dashboard_type == 'student' %}
+        Student Dashboard
+    {% else %}
+        Teacher Dashboard
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if dashboard_type == 'admin' %}
+        <!-- Admin Dashboard -->
+        <h1 class="mb-4">Administrative Dashboard</h1>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-title">Total Students</div>
+                    <div class="dashboard-card-value">{{ total_students }}</div>
+                    <a href="{% url 'admin:students_student_changelist' %}" class="btn btn-primary mt-3">View Students</a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-title">Total Teachers</div>
+                    <div class="dashboard-card-value">{{ total_teachers }}</div>
+                    <a href="{% url 'admin:teachers_teacher_changelist' %}" class="btn btn-primary mt-3">View Teachers</a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-title">Active Courses</div>
+                    <div class="dashboard-card-value">{{ active_courses }}</div>
+                    <a href="{% url 'admin:courses_course_changelist' %}" class="btn btn-primary mt-3">View Courses</a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-title">Departments</div>
+                    <div class="dashboard-card-value">{{ total_departments }}</div>
+                    <a href="{% url 'admin:core_department_changelist' %}" class="btn btn-primary mt-3">View Departments</a>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <!-- Recent Activities -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="{% url 'admin:students_student_add' %}" class="list-group-item list-group-item-action">
+                                Add New Student
+                            </a>
+                            <a href="{% url 'admin:teachers_teacher_add' %}" class="list-group-item list-group-item-action">
+                                Add New Teacher
+                            </a>
+                            <a href="{% url 'admin:courses_course_add' %}" class="list-group-item list-group-item-action">
+                                Add New Course
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Overview -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Recent Activities</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            {% for activity in recent_activities %}
+                            <li class="list-group-item">{{ activity }}</li>
+                            {% empty %}
+                            <li class="list-group-item">No recent activities</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% elif dashboard_type == 'student' %}
+        <!-- Student Dashboard -->
+        <h1 class="mb-4">Student Dashboard</h1>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Your Courses</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Instructor</th>
+                                        <th>Credits</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for course in enrolled_courses %}
+                                    <tr>
+                                        <td>{{ course.course_code }}</td>
+                                        <td>{{ course.name }}</td>
+                                        <td>{{ course.instructor.name }}</td>
+                                        <td>{{ course.credits }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No courses enrolled yet.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="{% url 'course_registration' %}" class="list-group-item list-group-item-action">
+                                Course Registration
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                View Grades
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                View Schedule
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- Teacher Dashboard -->
+        <h1 class="mb-4">Teacher Dashboard</h1>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Your Courses</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Students</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for course in teaching_courses %}
+                                    <tr>
+                                        <td>{{ course.course_code }}</td>
+                                        <td>{{ course.name }}</td>
+                                        <td>{{ course.enrolled_students.count }}</td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-primary">Manage</a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No courses assigned yet.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="#" class="list-group-item list-group-item-action">
+                                Grade Management
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                Course Materials
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                Schedule
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
