@@ -11,6 +11,7 @@ class Student(models.Model):
     phone = models.CharField(max_length=15)
     admission_year = models.ForeignKey(AcademicYear, on_delete=models.SET_NULL, null=True)
     graduation_year = models.ForeignKey(AcademicYear, on_delete=models.SET_NULL, null=True, related_name='graduating_students')
+    enrolled_courses = models.ManyToManyField('courses.CourseOffering', related_name='enrolled_students')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
