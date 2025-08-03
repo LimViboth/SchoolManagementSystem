@@ -87,6 +87,11 @@
             <div class="card-header">
                 <ul class="nav nav-tabs card-header-tabs" role="tablist">
                     <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#enrolled-courses">
+                            Enrolled Courses
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link active" data-bs-toggle="tab" href="#current-grades">
                             Current Grades
                         </a>
@@ -105,6 +110,38 @@
             </div>
             <div class="card-body">
                 <div class="tab-content">
+                    <!-- Enrolled Courses Tab -->
+                    <div class="tab-pane fade" id="enrolled-courses">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Semester</th>
+                                        <th>Teacher</th>
+                                        <th>Credits</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for course in all_enrolled_courses %}
+                                    <tr>
+                                        <td>{{ course.course.code }}</td>
+                                        <td>{{ course.course.name }}</td>
+                                        <td>{{ course.semester.name }}</td>
+                                        <td>{{ course.teacher.user.get_full_name|default:"Not assigned" }}</td>
+                                        <td>{{ course.course.credits }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">You are not enrolled in any courses.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <!-- Current Grades Tab -->
                     <div class="tab-pane fade show active" id="current-grades">
                         <div class="table-responsive">
@@ -402,7 +439,31 @@
         // You can add AJAX call here to update the grade history table
         // based on the selected semester
         const semesterId = this.value;
-        fetch(`/api/grades/history/${student_id}/${semesterId}/`)
+        
+        // Get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+        
+        fetch(`/api/grades/history/${student_id}/${semesterId}/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            }
+        })
             .then(response => response.json())
             .then(data => {
                 // Update the grade history table with the new data

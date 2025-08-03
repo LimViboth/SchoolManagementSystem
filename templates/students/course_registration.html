@@ -74,7 +74,8 @@
                             <td>{{ offering.course.credits }}</td>
                             <td>{{ offering.teacher.user.get_full_name }}</td>
                             <td>
-                                {{ offering.available_slots }} / {{ offering.max_students }}
+                                {{ offering.available_slots }} / {{ offering.increased_max }}
+                                <small class="text-muted d-block">(Extended capacity)</small>
                             </td>
                             <td>
                                 {% if offering.is_full %}

@@ -5,6 +5,10 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db.models import Q, Avg, Count
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_protect
 from .models import Student
 from django.contrib.auth.models import User
 from courses.models import CourseOffering, Enrollment
@@ -86,6 +90,9 @@ class StudentDetailView(LoginRequiredMixin, DetailView):
         student = self.get_object()
         current_semester = Semester.objects.filter(is_current=True).first()
 
+        # Get all enrolled courses
+        all_enrolled_courses = student.enrolled_courses.all().select_related('course', 'semester', 'teacher')
+        
         # Get current enrollments and grades
         current_grades = student.enrollment_set.filter(
             course_offering__semester=current_semester,
@@ -175,6 +182,7 @@ class StudentDetailView(LoginRequiredMixin, DetailView):
             'attendance_stats': attendance_chart_data,
             'grade_history_labels': grade_history_labels,
             'grade_history_data': grade_history_data,
+            'all_enrolled_courses': all_enrolled_courses,
         })
         return context
 
@@ -222,8 +230,11 @@ class CourseRegistrationView(LoginRequiredMixin, TemplateView):
                 withdrawn=False
             ).count()
             
-            offering.available_slots = offering.max_students - enrolled_count
+            # Increased capacity by 20% to allow more available spots
+            increased_capacity = int(offering.max_students * 1.2)
+            offering.available_slots = increased_capacity - enrolled_count
             offering.is_full = offering.available_slots <= 0
+            offering.increased_max = increased_capacity
 
         context.update({
             'current_semester': current_semester,
@@ -231,3 +242,67 @@ class CourseRegistrationView(LoginRequiredMixin, TemplateView):
             'departments': Department.objects.all()
         })
         return context
+
+
+@login_required
+@csrf_protect
+def register_course(request, offering_id):
+    """
+    View function to register a student for a course offering
+    """
+    if request.method == 'POST':
+        student = get_object_or_404(Student, user=request.user)
+        course_offering = get_object_or_404(CourseOffering, id=offering_id)
+        
+        # Check if already registered
+        if Enrollment.objects.filter(student=student, course_offering=course_offering, withdrawn=False).exists():
+            messages.warning(request, f"You are already registered for {course_offering.course.code}.")
+            return HttpResponseRedirect(reverse('students:course_registration'))
+        
+        # Check if course is full
+        enrolled_count = Enrollment.objects.filter(course_offering=course_offering, withdrawn=False).count()
+        # Increased capacity by 20% to allow more available spots
+        increased_capacity = int(course_offering.max_students * 1.2)
+        if enrolled_count >= increased_capacity:
+            messages.error(request, f"Course {course_offering.course.code} is full.")
+            return HttpResponseRedirect(reverse('students:course_registration'))
+        
+        # Create enrollment
+        Enrollment.objects.create(
+            student=student,
+            course_offering=course_offering
+        )
+        
+        messages.success(request, f"Successfully registered for {course_offering.course.code}.")
+    
+    return HttpResponseRedirect(reverse('students:course_registration'))
+
+
+@login_required
+@csrf_protect
+def drop_course(request, offering_id):
+    """
+    View function to drop a course enrollment
+    """
+    if request.method == 'POST':
+        student = get_object_or_404(Student, user=request.user)
+        course_offering = get_object_or_404(CourseOffering, id=offering_id)
+        
+        # Find the enrollment
+        try:
+            enrollment = Enrollment.objects.get(
+                student=student,
+                course_offering=course_offering,
+                withdrawn=False
+            )
+            
+            # Mark as withdrawn
+            enrollment.withdrawn = True
+            enrollment.withdrawal_date = timezone.now().date()
+            enrollment.save()
+            
+            messages.success(request, f"Successfully dropped {course_offering.course.code}.")
+        except Enrollment.DoesNotExist:
+            messages.warning(request, f"You are not registered for {course_offering.course.code}.")
+    
+    return HttpResponseRedirect(reverse('students:course_registration'))
