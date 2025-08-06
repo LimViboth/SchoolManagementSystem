@@ -1,52 +1,30 @@
-# Course Capacity Enhancement
+# Changes Log
 
-## Issue
-The original system had a strict limit on course enrollment based on the `max_students` field in the `CourseOffering` model. When a course reached its maximum capacity, no more students could enroll, leading to limited available spots.
+## 2025-08-05: Fixed AttributeError in home_view
 
-## Changes Made
+### Issue
+The application was throwing an AttributeError when accessing the home page:
+```
+'Teacher' object has no attribute 'teaching_courses'
+```
 
-### 1. Modified `register_course` View
-Updated the course registration logic in `students/views.py` to increase the maximum capacity by 20%:
+This error occurred in the `home_view` function in `core/views.py` at line 33, where it was trying to access `teacher.teaching_courses.all()`.
+
+### Solution
+Added a `related_name` parameter to the `teacher` field in the `CourseOffering` model:
 
 ```python
-# Increased capacity by 20% to allow more available spots
-increased_capacity = int(course_offering.max_students * 1.2)
-if enrolled_count >= increased_capacity:
-    messages.error(request, f"Course {course_offering.course.code} is full.")
-    return HttpResponseRedirect(reverse('students:course_registration'))
+teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, related_name='teaching_courses', db_index=True)
 ```
 
-### 2. Updated `CourseRegistrationView`
-Modified the view to calculate and display the increased capacity:
+This creates a reverse relationship that allows accessing course offerings from a teacher instance via the `teaching_courses` attribute.
 
-```python
-# Increased capacity by 20% to allow more available spots
-increased_capacity = int(offering.max_students * 1.2)
-offering.available_slots = increased_capacity - enrolled_count
-offering.is_full = offering.available_slots <= 0
-offering.increased_max = increased_capacity
-```
+### Implementation Details
+1. Modified the `CourseOffering` model in `courses/models.py` to add the `related_name` parameter
+2. Created a migration for the change: `courses/migrations/0005_alter_courseoffering_teacher.py`
+3. Applied the migration using the `--fake` flag due to database conflicts
+4. Verified the fix by testing the `Teacher` model and the `home_view` function
 
-### 3. Updated Course Registration Template
-Updated the template to display the increased capacity to students:
-
-```html
-{{ offering.available_slots }} / {{ offering.increased_max }}
-<small class="text-muted d-block">(Extended capacity)</small>
-```
-
-## Impact
-
-The changes have successfully increased the available spots for course enrollment by 20% across all courses. This means:
-
-1. Courses that were previously full now have additional spots available
-2. Students have more opportunities to enroll in their desired courses
-3. The system can accommodate more students without requiring database changes to the actual `max_students` values
-
-### Example Impact
-For a course with a maximum capacity of 40 students:
-- Original capacity: 40 students
-- Increased capacity: 48 students (20% increase)
-- Additional spots: 8 students
-
-This enhancement provides flexibility in course enrollment while maintaining the original capacity values in the database.
+### Testing
+- Confirmed that `Teacher` objects now have a `teaching_courses` attribute
+- Verified that the `home_view` function works correctly with teacher users

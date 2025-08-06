@@ -1,6 +1,6 @@
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db.models import Q, Avg, Count
@@ -12,7 +12,8 @@ from django.views.decorators.csrf import csrf_protect
 from .models import Student
 from django.contrib.auth.models import User
 from courses.models import CourseOffering, Enrollment
-from core.models import Department, Semester
+from core.models import Department, Semester, AcademicYear
+from django import forms
 
 class StudentListView(LoginRequiredMixin, ListView):
     model = Student
@@ -225,16 +226,10 @@ class CourseRegistrationView(LoginRequiredMixin, TemplateView):
                 withdrawn=False
             ).exists()
             
-            enrolled_count = Enrollment.objects.filter(
-                course_offering=offering,
-                withdrawn=False
-            ).count()
-            
-            # Increased capacity by 20% to allow more available spots
-            increased_capacity = int(offering.max_students * 1.2)
-            offering.available_slots = increased_capacity - enrolled_count
-            offering.is_full = offering.available_slots <= 0
-            offering.increased_max = increased_capacity
+            # Use the model methods to get capacity information
+            offering.available_slots = offering.get_available_slots()
+            offering.is_full = offering.is_full()
+            offering.increased_max = offering.get_effective_capacity()
 
         context.update({
             'current_semester': current_semester,
@@ -254,27 +249,43 @@ def register_course(request, offering_id):
         student = get_object_or_404(Student, user=request.user)
         course_offering = get_object_or_404(CourseOffering, id=offering_id)
         
-        # Check if already registered
+        # Check if already registered (active enrollment)
         if Enrollment.objects.filter(student=student, course_offering=course_offering, withdrawn=False).exists():
             messages.warning(request, f"You are already registered for {course_offering.course.code}.")
             return HttpResponseRedirect(reverse('students:course_registration'))
         
-        # Check if course is full
-        enrolled_count = Enrollment.objects.filter(course_offering=course_offering, withdrawn=False).count()
-        # Increased capacity by 20% to allow more available spots
-        increased_capacity = int(course_offering.max_students * 1.2)
-        if enrolled_count >= increased_capacity:
+        # Check if a withdrawn enrollment exists and reactivate it instead of creating a new one
+        existing_enrollment = Enrollment.objects.filter(
+            student=student, 
+            course_offering=course_offering, 
+            withdrawn=True
+        ).first()
+        
+        if existing_enrollment:
+            # Reactivate the enrollment
+            existing_enrollment.withdrawn = False
+            existing_enrollment.withdrawal_date = None
+            existing_enrollment.enrollment_date = timezone.now().date()
+            existing_enrollment.save()
+            messages.success(request, f"Successfully re-registered for {course_offering.course.code}.")
+            return HttpResponseRedirect(reverse('students:course_registration'))
+        
+        # Check if course is full using the model method
+        if course_offering.is_full():
             messages.error(request, f"Course {course_offering.course.code} is full.")
             return HttpResponseRedirect(reverse('students:course_registration'))
         
-        # Create enrollment
-        Enrollment.objects.create(
-            student=student,
-            course_offering=course_offering
-        )
+        try:
+            # Create enrollment
+            Enrollment.objects.create(
+                student=student,
+                course_offering=course_offering
+            )
+            messages.success(request, f"Successfully registered for {course_offering.course.code}.")
+        except Exception as e:
+            # Handle any database errors, including IntegrityError
+            messages.error(request, f"Error registering for course: {str(e)}")
         
-        messages.success(request, f"Successfully registered for {course_offering.course.code}.")
-    
     return HttpResponseRedirect(reverse('students:course_registration'))
 
 
@@ -306,3 +317,77 @@ def drop_course(request, offering_id):
             messages.warning(request, f"You are not registered for {course_offering.course.code}.")
     
     return HttpResponseRedirect(reverse('students:course_registration'))
+
+
+class StudentRegistrationForm(forms.Form):
+    username = forms.CharField(max_length=150, required=True)
+    password = forms.CharField(widget=forms.PasswordInput(), required=True)
+    confirm_password = forms.CharField(widget=forms.PasswordInput(), required=True)
+    first_name = forms.CharField(max_length=150, required=True)
+    last_name = forms.CharField(max_length=150, required=True)
+    email = forms.EmailField(required=True)
+    student_id = forms.CharField(max_length=20, required=True)
+    department = forms.ModelChoiceField(queryset=Department.objects.all(), required=True)
+    date_of_birth = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=True)
+    address = forms.CharField(max_length=500, required=True)
+    phone = forms.CharField(max_length=15, required=True)
+    admission_year = forms.ModelChoiceField(queryset=AcademicYear.objects.all(), required=True)
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password')
+        confirm_password = cleaned_data.get('confirm_password')
+        
+        if password and confirm_password and password != confirm_password:
+            self.add_error('confirm_password', "Passwords don't match")
+        
+        username = cleaned_data.get('username')
+        if username and User.objects.filter(username=username).exists():
+            self.add_error('username', "Username already exists")
+            
+        student_id = cleaned_data.get('student_id')
+        if student_id and Student.objects.filter(student_id=student_id).exists():
+            self.add_error('student_id', "Student ID already exists")
+            
+        email = cleaned_data.get('email')
+        if email and User.objects.filter(email=email).exists():
+            self.add_error('email', "Email already exists")
+            
+        return cleaned_data
+
+
+@csrf_protect
+def student_registration(request):
+    """
+    View function to register a new student
+    """
+    if request.method == 'POST':
+        form = StudentRegistrationForm(request.POST)
+        if form.is_valid():
+            # Create User
+            user = User.objects.create_user(
+                username=form.cleaned_data['username'],
+                password=form.cleaned_data['password'],
+                email=form.cleaned_data['email'],
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name']
+            )
+            
+            # Create Student
+            student = Student.objects.create(
+                user=user,
+                student_id=form.cleaned_data['student_id'],
+                department=form.cleaned_data['department'],
+                date_of_birth=form.cleaned_data['date_of_birth'],
+                address=form.cleaned_data['address'],
+                phone=form.cleaned_data['phone'],
+                admission_year=form.cleaned_data['admission_year'],
+                graduation_year=None  # This can be set later
+            )
+            
+            messages.success(request, "Registration successful! You can now log in.")
+            return redirect('login')
+    else:
+        form = StudentRegistrationForm()
+    
+    return render(request, 'students/registration.html', {'form': form})

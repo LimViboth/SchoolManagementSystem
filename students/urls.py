@@ -10,4 +10,5 @@ urlpatterns = [
     path('courses/registration/', views.CourseRegistrationView.as_view(), name='course_registration'),
     path('courses/register/<int:offering_id>/', views.register_course, name='register_course'),
     path('courses/drop/<int:offering_id>/', views.drop_course, name='drop_course'),
+    path('register/', views.student_registration, name='registration'),
 ]

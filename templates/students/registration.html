@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Registration{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Student Registration</h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h4 class="mb-3">Account Information</h4>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_username" class="form-label">Username</label>
+                                <input type="text" name="username" id="id_username" class="form-control {% if form.username.errors %}is-invalid{% endif %}" required>
+                                {% if form.username.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.username.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_email" class="form-label">Email</label>
+                                <input type="email" name="email" id="id_email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" required>
+                                {% if form.email.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.email.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_password" class="form-label">Password</label>
+                                <input type="password" name="password" id="id_password" class="form-control {% if form.password.errors %}is-invalid{% endif %}" required>
+                                {% if form.password.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.password.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_confirm_password" class="form-label">Confirm Password</label>
+                                <input type="password" name="confirm_password" id="id_confirm_password" class="form-control {% if form.confirm_password.errors %}is-invalid{% endif %}" required>
+                                {% if form.confirm_password.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.confirm_password.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h4 class="mb-3">Personal Information</h4>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_first_name" class="form-label">First Name</label>
+                                <input type="text" name="first_name" id="id_first_name" class="form-control {% if form.first_name.errors %}is-invalid{% endif %}" required>
+                                {% if form.first_name.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.first_name.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_last_name" class="form-label">Last Name</label>
+                                <input type="text" name="last_name" id="id_last_name" class="form-control {% if form.last_name.errors %}is-invalid{% endif %}" required>
+                                {% if form.last_name.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.last_name.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_student_id" class="form-label">Student ID</label>
+                                <input type="text" name="student_id" id="id_student_id" class="form-control {% if form.student_id.errors %}is-invalid{% endif %}" required>
+                                {% if form.student_id.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.student_id.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_date_of_birth" class="form-label">Date of Birth</label>
+                                <input type="date" name="date_of_birth" id="id_date_of_birth" class="form-control {% if form.date_of_birth.errors %}is-invalid{% endif %}" required>
+                                {% if form.date_of_birth.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.date_of_birth.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_phone" class="form-label">Phone Number</label>
+                                <input type="text" name="phone" id="id_phone" class="form-control {% if form.phone.errors %}is-invalid{% endif %}" required>
+                                {% if form.phone.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.phone.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_department" class="form-label">Department</label>
+                                <select name="department" id="id_department" class="form-select {% if form.department.errors %}is-invalid{% endif %}" required>
+                                    <option value="">Select Department</option>
+                                    {% for department in form.department.field.queryset %}
+                                    <option value="{{ department.id }}">{{ department.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.department.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.department.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_admission_year" class="form-label">Admission Year</label>
+                                <select name="admission_year" id="id_admission_year" class="form-select {% if form.admission_year.errors %}is-invalid{% endif %}" required>
+                                    <option value="">Select Admission Year</option>
+                                    {% for year in form.admission_year.field.queryset %}
+                                    <option value="{{ year.id }}">{{ year.year }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.admission_year.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.admission_year.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="id_address" class="form-label">Address</label>
+                                <textarea name="address" id="id_address" class="form-control {% if form.address.errors %}is-invalid{% endif %}" rows="3" required></textarea>
+                                {% if form.address.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.address.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Register</button>
+                        </div>
+                        
+                        <div class="mt-3 text-center">
+                            <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

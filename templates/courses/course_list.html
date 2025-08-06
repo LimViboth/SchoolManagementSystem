@@ -28,12 +28,20 @@
                         <tbody>
                             {% for course in courses %}
                             <tr>
-                                <td>{{ course.course_code }}</td>
+                                <td>{{ course.code }}</td>
                                 <td>{{ course.name }}</td>
                                 <td>{{ course.department.name }}</td>
                                 <td>{{ course.credits }}</td>
-                                <td>{{ course.instructor.user.get_full_name }}</td>
-                                <td>{{ course.schedule }}</td>
+                                <td>
+                                    {% if course.unique_instructors %}
+                                        {% for instructor in course.unique_instructors %}
+                                            {{ instructor.first_name }} {{ instructor.last_name }}{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>-</td>
                                 <td>
                                     <a href="#" class="btn btn-sm btn-primary">View</a>
                                     <a href="#" class="btn btn-sm btn-secondary">Edit</a>

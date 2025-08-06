@@ -2,12 +2,13 @@ from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from .models import Course, CourseOffering
+from teachers.models import Teacher
 
 class CourseListView(LoginRequiredMixin, ListView):
     model = Course
     template_name = 'courses/course_list.html'
     context_object_name = 'courses'
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         search_term = self.request.GET.get('search')
@@ -18,6 +19,17 @@ class CourseListView(LoginRequiredMixin, ListView):
             )
         return queryset
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        courses = context['courses']
+
+        # Attach unique instructors to each course
+        for course in courses:
+            course.unique_instructors = course.get_unique_instructors()
+
+        return context
+
+
 class CourseDetailView(LoginRequiredMixin, DetailView):
     model = Course
     template_name = 'courses/course_detail.html'
@@ -26,8 +38,26 @@ class CourseDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         course = self.get_object()
+
         context['offerings'] = course.courseoffering_set.all()
+        context['unique_instructors'] = course.get_unique_instructors()
+
+        # Get unique students across all offerings for this course
+        students = (
+            course.courseoffering_set
+            .prefetch_related('enrollment_set__student__user')
+            .values(
+                'enrollment__student__student_id',
+                'enrollment__student__user__first_name',
+                'enrollment__student__user__last_name',
+                'enrollment__grade'
+            )
+            .distinct()
+        )
+        context['students'] = students
+
         return context
+
 
 class CourseOfferingDetailView(LoginRequiredMixin, DetailView):
     model = CourseOffering
