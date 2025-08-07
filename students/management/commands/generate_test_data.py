@@ -224,7 +224,7 @@ class Command(BaseCommand):
     def create_enrollments(self, students, courses, semesters):
         grades = ['A', 'B', 'C', 'D', 'F', 'W', 'I']
         weights = [0.15, 0.3, 0.3, 0.1, 0.05, 0.05, 0.05]  # Distribution of grades
-
+        active_offerings = []
         for semester in semesters:
             for course in courses:
                 # Create a unique teacher for each course
@@ -232,7 +232,6 @@ class Command(BaseCommand):
                 last_name = fake.last_name()
                 username = f'teacher_{course.code.lower()}'
                 email = f'{username}@example.com'
-                
                 teacher, _ = User.objects.get_or_create(
                     username=username,
                     defaults={
@@ -241,7 +240,6 @@ class Command(BaseCommand):
                         'email': email
                     }
                 )
-
                 teacher_id = f'TCH{course.code}'
                 teacher_profile, _ = Teacher.objects.get_or_create(
                     user=teacher,
@@ -255,17 +253,20 @@ class Command(BaseCommand):
                         'joining_date': timezone.now().date() - timedelta(days=random.randint(365, 3650))
                     }
                 )
-                # Create course offering
+                # Ensure at least 5 active offerings with positive max_students
+                is_active = True if len(active_offerings) < 5 else random.choice([True, False])
+                max_students = random.randint(10, 50)
                 offering, _ = CourseOffering.objects.get_or_create(
                     course=course,
                     semester=semester,
                     teacher=teacher_profile,
                     defaults={
-                        'max_students': 40,
-                        'is_active': True
+                        'max_students': max_students,
+                        'is_active': is_active
                     }
                 )
-
+                if is_active:
+                    active_offerings.append(offering)
                 # Enroll random students
                 for student in random.sample(students, k=random.randint(15, 30)):
                     enrollment, created = Enrollment.objects.get_or_create(
@@ -276,7 +277,6 @@ class Command(BaseCommand):
                             'enrollment_date': timezone.now()
                         }
                     )
-
                     # Only add grades for past semesters
                     if semester.end_date < timezone.now().date():
                         is_withdrawn = random.random() < 0.05  # 5% chance of withdrawal
@@ -286,17 +286,13 @@ class Command(BaseCommand):
                             enrollment.grade = 'W'
                         else:
                             # Generate assignment scores (30% of total grade)
-                            assignment_score = random.uniform(15, 30)  # Out of 30
-                            
+                            assignment_score = max(0, random.uniform(15, 30))  # Out of 30, non-negative
                             # Generate midterm score (30% of total grade)
-                            midterm_score = random.uniform(15, 30)  # Out of 30
-                            
+                            midterm_score = max(0, random.uniform(15, 30))  # Out of 30, non-negative
                             # Generate final score (40% of total grade)
-                            final_score = random.uniform(20, 40)  # Out of 40
-                            
+                            final_score = max(0, random.uniform(20, 40))  # Out of 40, non-negative
                             # Calculate total score
                             total_score = assignment_score + midterm_score + final_score
-                            
                             # Assign letter grade based on total score
                             if total_score >= 90:
                                 letter_grade = 'A'
@@ -308,7 +304,6 @@ class Command(BaseCommand):
                                 letter_grade = 'D'
                             else:
                                 letter_grade = 'F'
-                            
                             enrollment.assignment_score = assignment_score
                             enrollment.midterm_score = midterm_score
                             enrollment.final_score = final_score

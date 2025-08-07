@@ -40,6 +40,9 @@ class CourseOffering(models.Model):
     is_active = models.BooleanField(default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # New fields
+    schedule = models.CharField(max_length=255, blank=True, null=True)
+    material = models.TextField(blank=True, null=True)
 
     class Meta:
         unique_together = ['course', 'semester', 'teacher']

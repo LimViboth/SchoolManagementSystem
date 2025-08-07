@@ -1,0 +1,39 @@
+{% extends 'base/base.html' %}
+{% block title %}Manage Grades - {{ offering.course.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2>Manage Grades for {{ offering.course.code }} - {{ offering.course.name }}</h2>
+    <h5>Semester: {{ offering.semester }}</h5>
+    <form method="post">
+        {% csrf_token %}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Grade</th>
+                        <th>Assignment Score</th>
+                        <th>Midterm Score</th>
+                        <th>Final Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in formset.forms %}
+                    <tr>
+                        <td>{{ form.instance.student.student_id }}</td>
+                        <td>{{ form.instance.student.user.get_full_name }}</td>
+                        <td>{{ form.grade }}</td>
+                        <td>{{ form.assignment_score }}</td>
+                        <td>{{ form.midterm_score }}</td>
+                        <td>{{ form.final_score }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="btn btn-success">Save Grades</button>
+    </form>
+    <a href="{% url 'teachers:teacher_detail' offering.teacher.pk %}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+</div>
+{% endblock %}

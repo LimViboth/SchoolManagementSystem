@@ -1,8 +1,14 @@
-{% extends 'base.html' %}
+{% extends 'base/base.html' %}
 
 {% block title %}{{ teacher.user.get_full_name }} - School Management System{% endblock %}
 
 {% block content %}
+<pre>
+courses: {{ courses|length }}
+{% for offering in courses %}
+  offering: {{ offering }} | course: {{ offering.course }} | code: {{ offering.course.code }} | name: {{ offering.course.name }}
+{% endfor %}
+</pre>
 <div class="row">
     <div class="col-md-12">
         <nav aria-label="breadcrumb">
@@ -85,28 +91,30 @@
                             <tr>
                                 <th>Course Code</th>
                                 <th>Course Name</th>
-                                <th>Schedule</th>
+                                <th>Credits</th>
+                                <th>Semester</th>
                                 <th>Students</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for course in teacher.teaching_courses.all %}
+                            {% for offering in courses %}
                             <tr>
-                                <td>{{ course.course_code }}</td>
-                                <td>{{ course.name }}</td>
-                                <td>{{ course.schedule }}</td>
-                                <td>{{ course.enrolled_students.count }}</td>
+                                <td>{{ offering.course.code|default:"-" }}</td>
+                                <td>{{ offering.course.name|default:"-" }}</td>
+                                <td>{{ offering.course.credits }}</td>
+                                <td>{{ offering.semester }}</td>
+                                <td>{{ offering.enrollment_set.count }}</td>
                                 <td>
                                     <a href="#" class="btn btn-sm btn-primary">View</a>
                                     {% if user.is_staff or user == teacher.user %}
-                                        <a href="#" class="btn btn-sm btn-secondary">Manage</a>
+                                        <a href="{% url 'teachers:manage_grades' offering.id %}" class="btn btn-sm btn-warning">Manage Grades</a>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center">No courses assigned.</td>
+                                <td colspan="6" class="text-center">No courses assigned.</td>
                             </tr>
                             {% endfor %}
                         </tbody>

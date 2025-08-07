@@ -11,4 +11,5 @@ urlpatterns = [
     path('courses/register/<int:offering_id>/', views.register_course, name='register_course'),
     path('courses/drop/<int:offering_id>/', views.drop_course, name='drop_course'),
     path('register/', views.student_registration, name='registration'),
+    path('grade/<int:pk>/', views.StudentGradeDetailView.as_view(), name='grade_detail'),
 ]

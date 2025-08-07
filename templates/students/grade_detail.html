@@ -1,0 +1,65 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Grade Details - School Management System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Grade Details</h3>
+                </div>
+                <div class="card-body">
+                    <h4>{{ enrollment.course_offering.course.name }} ({{ enrollment.course_offering.course.code }})</h4>
+                    <p><strong>Instructor:</strong> {{ enrollment.course_offering.teacher.user.get_full_name|default:'Not assigned' }}</p>
+                    <p><strong>Semester:</strong> {{ enrollment.course_offering.semester.name }}</p>
+                    <hr>
+                    <div class="row mb-2">
+                        <div class="col-6"><strong>Assignment Score (30%)</strong></div>
+                        <div class="col-6">{{ enrollment.assignment_score|default:'-' }}/30</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6"><strong>Midterm Score (30%)</strong></div>
+                        <div class="col-6">{{ enrollment.midterm_score|default:'-' }}/30</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6"><strong>Final Score (40%)</strong></div>
+                        <div class="col-6">{{ enrollment.final_score|default:'-' }}/40</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6"><strong>Total Score</strong></div>
+                        <div class="col-6">{{ enrollment.calculate_total_score|floatformat:1 }}/100</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6"><strong>Grade</strong></div>
+                        <div class="col-6">
+                            <span class="badge {% if enrollment.grade == 'A' %}bg-success{% elif enrollment.grade == 'F' %}bg-danger{% else %}bg-primary{% endif %}">
+                                {{ enrollment.grade|default:'N/A' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6"><strong>Status</strong></div>
+                        <div class="col-6">
+                            {% if enrollment.grade in 'ABC' %}
+                                <span class="badge bg-success">Passed</span>
+                            {% elif enrollment.grade == 'F' %}
+                                <span class="badge bg-danger">Failed</span>
+                            {% elif enrollment.grade == 'W' %}
+                                <span class="badge bg-warning">Withdrawn</span>
+                            {% elif enrollment.grade == 'I' %}
+                                <span class="badge bg-secondary">Incomplete</span>
+                            {% else %}
+                                <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <hr>
+                    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

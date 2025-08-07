@@ -62,7 +62,8 @@
                         <tr>
                             <th>Course Code</th>
                             <th>Course Name</th>
-                            <th>Teacher</th>
+                            <th>Credits</th>
+                            <th>Instructor</th>
                             <th>Schedule</th>
                             <th>Actions</th>
                         </tr>
@@ -72,10 +73,12 @@
                         <tr>
                             <td>{{ enrollment.course_offering.course.code }}</td>
                             <td>{{ enrollment.course_offering.course.name }}</td>
-                            <td>{{ enrollment.course_offering.teacher.user.get_full_name }}</td>
+                            <td>{{ enrollment.course_offering.course.credits }}</td>
+                            <td>{{ enrollment.course_offering.teacher.user.get_full_name|default:'Not assigned' }}</td>
                             <td>Schedule Info</td>
                             <td>
                                 <a href="{% url 'courses:course_detail' enrollment.course_offering.course.id %}" class="btn btn-sm btn-primary">View Details</a>
+                                <a href="{% url 'students:grade_detail' enrollment.id %}" class="btn btn-sm btn-info">View Grade</a>
                             </td>
                         </tr>
                         {% empty %}

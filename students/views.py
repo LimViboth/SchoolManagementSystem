@@ -14,6 +14,7 @@ from django.contrib.auth.models import User
 from courses.models import CourseOffering, Enrollment
 from core.models import Department, Semester, AcademicYear
 from django import forms
+from django.utils.decorators import method_decorator
 
 class StudentListView(LoginRequiredMixin, ListView):
     model = Student
@@ -38,13 +39,25 @@ class StudentDashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         student = get_object_or_404(Student, user=self.request.user)
         current_semester = Semester.objects.filter(is_current=True).first()
-        
-        # Get current enrollments
-        current_enrollments = Enrollment.objects.filter(
-            student=student,
-            course_offering__semester=current_semester,
-            withdrawn=False
-        )
+        if current_semester:
+            current_enrollments = Enrollment.objects.filter(
+                student=student,
+                course_offering__semester=current_semester,
+                withdrawn=False
+            ).select_related(
+                'course_offering__course',
+                'course_offering__teacher',
+                'course_offering__teacher__user'
+            )
+        else:
+            current_enrollments = Enrollment.objects.filter(
+                student=student,
+                withdrawn=False
+            ).select_related(
+                'course_offering__course',
+                'course_offering__teacher',
+                'course_offering__teacher__user'
+            )
 
         # Calculate attendance percentage
         attendance_count = student.studentattendance_set.count()
@@ -59,7 +72,6 @@ class StudentDashboardView(LoginRequiredMixin, TemplateView):
             student=student,
             grade__isnull=False
         ).exclude(grade__in=['W', 'I'])
-        
         if enrolled_courses.exists():
             grade_points = {
                 'A': 4.0, 'B': 3.0, 'C': 2.0, 'D': 1.0, 'F': 0.0
@@ -186,6 +198,16 @@ class StudentDetailView(LoginRequiredMixin, DetailView):
             'all_enrolled_courses': all_enrolled_courses,
         })
         return context
+
+class StudentGradeDetailView(LoginRequiredMixin, DetailView):
+    model = Enrollment
+    template_name = 'students/grade_detail.html'
+    context_object_name = 'enrollment'
+
+    def get_queryset(self):
+        # Only allow the logged-in student to view their own grades
+        student = get_object_or_404(Student, user=self.request.user)
+        return Enrollment.objects.filter(student=student)
 
 class CourseRegistrationView(LoginRequiredMixin, TemplateView):
     template_name = 'students/course_registration.html'

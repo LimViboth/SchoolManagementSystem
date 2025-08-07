@@ -9,7 +9,13 @@
             <h1>Courses</h1>
             <a href="#" class="btn btn-primary">Add New Course</a>
         </div>
-
+        <!-- Search Bar -->
+        <form method="get" class="mb-3">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="Search by code or name..." value="{{ request.GET.search }}">
+                <button class="btn btn-outline-secondary" type="submit">Search</button>
+            </div>
+        </form>
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
